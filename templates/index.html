@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AgroFertilizer Loss Predictor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    body { background: #f0f4ec; font-family: Calibri, sans-serif; }
+    .navbar { background: #2c5f2d; }
+    .navbar-brand { color: #97bc62 !important; font-weight: bold; font-size: 1.2rem; }
+    .hero { background: #1e3a2f; color: white; padding: 36px 0 24px; margin-bottom: 30px; }
+    .hero h1 { color: #97bc62; font-size: 2rem; font-weight: bold; }
+    .hero p  { color: #aaa; font-size: 1rem; margin-bottom: 0; }
+    .section-pill {
+      display: inline-block; background: #2c5f2d; color: white;
+      padding: 6px 16px; border-radius: 20px; font-weight: bold;
+      font-size: 0.9rem; margin-bottom: 14px;
+    }
+    .card { border: 1px solid #d6e8d0; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+    .card-header { background: #2c5f2d; color: white; font-weight: bold; border-radius: 10px 10px 0 0 !important; padding: 12px 20px; }
+    .form-label { font-weight: 600; color: #333; font-size: 0.92rem; }
+    .form-control, .form-select {
+      border: 1px solid #b5d4ac; border-radius: 6px;
+      font-size: 0.92rem; padding: 9px 12px;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: #2c5f2d; box-shadow: 0 0 0 0.2rem rgba(44,95,45,0.2);
+    }
+    .field-hint { font-size: 0.74rem; color: #888; margin-top: 3px; }
+    .btn-predict {
+      background: #2c5f2d; color: white; font-size: 1.1rem;
+      padding: 13px 0; border-radius: 8px; font-weight: bold;
+      border: none; width: 100%; letter-spacing: 0.5px;
+    }
+    .btn-predict:hover { background: #1e3a2f; color: #97bc62; }
+    .metric-card { background: white; border: 1px solid #d6e8d0; border-radius: 8px; padding: 14px; }
+    .metric-val   { font-size: 1.35rem; font-weight: bold; color: #2c5f2d; }
+    .metric-label { font-size: 0.75rem; color: #777; }
+    .best-badge   { background: #97bc62; color: #1e3a2f; font-size: 0.78rem; padding: 2px 10px; border-radius: 20px; font-weight: bold; }
+    footer { background: #2c5f2d; color: #97bc62; text-align: center; padding: 14px; margin-top: 50px; font-size: 0.88rem; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg px-3">
+  <a class="navbar-brand" href="/">🌾 AgroFertilizer Predictor</a>
+  <span class="ms-auto" style="color:#97bc62; font-size:0.85rem;">Best Model: <strong>{{ best }}</strong></span>
+</nav>
+
+<!-- HERO -->
+<div class="hero text-center">
+  <div class="container">
+    <h1>🌱 Fertilizer Loss Prediction System</h1>
+    <p>Enter 6 key farm details below to predict how much fertilizer will be lost (kg/ha)</p>
+  </div>
+</div>
+
+<div class="container pb-5">
+
+  <!-- MODEL RESULTS -->
+  <div class="card mb-4">
+    <div class="card-header">📊 Model Comparison — Random Forest vs Gradient Boosting</div>
+    <div class="card-body">
+      <div class="row g-3">
+        {% for r in results %}
+        <div class="col-md-6">
+          <div class="metric-card">
+            <div class="d-flex align-items-center mb-2">
+              <span class="fw-bold" style="color:#2c5f2d; font-size:1rem;">
+                {% if r.Model == best %}⭐ {% endif %}{{ r.Model }}
+              </span>
+              {% if r.Model == best %}
+              <span class="best-badge ms-2">Best Model</span>
+              {% endif %}
+            </div>
+            <div class="row text-center g-1">
+              <div class="col-3">
+                <div class="metric-val">{{ r.MAE }}</div>
+                <div class="metric-label">MAE ↓</div>
+              </div>
+              <div class="col-3">
+                <div class="metric-val">{{ r.MSE }}</div>
+                <div class="metric-label">MSE ↓</div>
+              </div>
+              <div class="col-3">
+                <div class="metric-val">{{ r.RMSE }}</div>
+                <div class="metric-label">RMSE ↓</div>
+              </div>
+              <div class="col-3">
+                <div class="metric-val">{{ r.R2 }}</div>
+                <div class="metric-label">R² ↑</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Balance Chart -->
+      <div class="text-center mt-4">
+        <p class="section-pill">📊 Dataset Balancing — Under-Sampling</p><br/>
+        <img src="/static/balance_chart.png" class="img-fluid rounded shadow-sm" style="max-width:580px;" alt="Balance Chart"/>
+        <p class="text-muted mt-2" style="font-size:0.82rem;">Dataset balanced to 4,951 records per loss group before training</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUT FORM -->
+  <div class="card">
+    <div class="card-header">📝 Enter Farm Details — Predict Fertilizer Loss</div>
+    <div class="card-body p-4">
+      <form action="/predict" method="POST">
+
+        <!-- ROW 1: Dropdowns -->
+        <div class="row g-3 mb-3">
+
+          <div class="col-md-3">
+            <label class="form-label">🌾 Crop Type</label>
+            <select class="form-select" name="Crop_Type" required>
+              <option value="">-- Select --</option>
+              {% for opt in options.Crop_Type %}
+              <option value="{{ opt }}">{{ opt }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">🪨 Soil Type</label>
+            <select class="form-select" name="Soil_Type" required>
+              <option value="">-- Select --</option>
+              {% for opt in options.Soil_Type %}
+              <option value="{{ opt }}">{{ opt }}</option>
+              {% endfor %}
+            </select>
+            <div class="field-hint">Sandy = high loss · Clay = low loss</div>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">💧 Irrigation Type</label>
+            <select class="form-select" name="Irrigation_Type" required>
+              <option value="">-- Select --</option>
+              {% for opt in options.Irrigation_Type %}
+              <option value="{{ opt }}">{{ opt }}</option>
+              {% endfor %}
+            </select>
+            <div class="field-hint">Flood = most loss · Drip = least</div>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">🧪 Fertilizer Type</label>
+            <select class="form-select" name="Fertilizer_Type" required>
+              <option value="">-- Select --</option>
+              {% for opt in options.Fertilizer_Type %}
+              <option value="{{ opt }}">{{ opt }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+        </div>
+
+        <!-- ROW 2: Numeric inputs -->
+        <div class="row g-3 mb-4">
+
+          <div class="col-md-6">
+            <label class="form-label">🌧️ Rainfall (mm)</label>
+            <input type="number" class="form-control" name="Rainfall"
+                   min="0" max="120" step="0.1" placeholder="e.g. 60" required/>
+            <div class="field-hint">How much rain fell on the field — Range: 0 to 120 mm</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">⚖️ Application Rate (kg/ha)</label>
+            <input type="number" class="form-control" name="Application_Rate"
+                   min="60" max="200" step="0.1" placeholder="e.g. 120" required/>
+            <div class="field-hint">How much fertilizer you applied — Range: 60 to 200 kg/ha</div>
+          </div>
+
+        </div>
+
+        <!-- NOTE -->
+        <div class="alert alert-secondary py-2 px-3 mb-4" style="font-size:0.82rem; background:#e8f0e4; border:1px solid #c5ddb9; color:#444;">
+          ℹ️ <strong>Note:</strong> Other technical features (soil pH, humidity, temperature, etc.) are automatically set to dataset average values so the model still works accurately.
+        </div>
+
+        <!-- SUBMIT -->
+        <div class="d-grid">
+          <button type="submit" class="btn-predict">🔍 Predict Fertilizer Loss</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  ITEP 303 · AgroFertilizerLoss Prediction System · Flask + Jinja2 · {{ best }} Model
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

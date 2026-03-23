@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Prediction Result</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    body { background: #f0f4ec; font-family: Calibri, sans-serif; }
+    .navbar { background: #2c5f2d; }
+    .navbar-brand { color: #97bc62 !important; font-weight: bold; }
+    .result-wrap { max-width: 680px; margin: 50px auto; }
+    .result-card { border-radius: 12px; border: none; box-shadow: 0 4px 24px rgba(0,0,0,0.12); overflow: hidden; }
+    .result-header { background: #1e3a2f; color: #97bc62; padding: 22px; text-align: center; }
+    .result-header h2 { font-size: 1.5rem; font-weight: bold; margin: 0; color: white; }
+    .result-header p  { color: #97bc62; font-size: 0.88rem; margin: 4px 0 0; }
+    .big-number { font-size: 4.5rem; font-weight: bold; text-align: center; line-height: 1; }
+    .unit-label { text-align: center; color: #777; font-size: 1rem; margin-top: 4px; }
+    .level-badge { font-size: 1.1rem; font-weight: bold; padding: 9px 28px; border-radius: 30px; display: inline-block; }
+    .level-success { background: #d4edda; color: #155724; }
+    .level-warning { background: #fff3cd; color: #856404; }
+    .level-danger  { background: #f8d7da; color: #721c24; }
+    .advice-box { background: white; border-left: 5px solid #2c5f2d; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 0.93rem; color: #333; margin-top: 16px; }
+    .summary-box { background: #f8fbf6; border: 1px solid #d6e8d0; border-radius: 8px; padding: 16px; margin-top: 16px; }
+    .summary-box h6 { color: #2c5f2d; font-weight: bold; border-bottom: 1px solid #d6e8d0; padding-bottom: 6px; margin-bottom: 10px; }
+    .s-row { display: flex; justify-content: space-between; font-size: 0.88rem; padding: 4px 0; border-bottom: 1px dashed #ddeedd; }
+    .s-row span:first-child { color: #666; }
+    .s-row span:last-child  { font-weight: 600; color: #333; }
+    .btn-back { background: #2c5f2d; color: white; border: none; padding: 11px 35px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 1rem; }
+    .btn-back:hover { background: #1e3a2f; color: #97bc62; }
+    footer { background: #2c5f2d; color: #97bc62; text-align: center; padding: 14px; margin-top: 50px; font-size: 0.88rem; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar px-3">
+  <a class="navbar-brand" href="/">🌾 AgroFertilizer Predictor</a>
+</nav>
+
+<div class="container">
+  <div class="result-wrap">
+
+    {% if error %}
+    <div class="alert alert-danger mt-4">
+      <strong>Error:</strong> {{ error }}
+      <br/><a href="/" class="btn-back mt-3 d-inline-block">← Try Again</a>
+    </div>
+
+    {% else %}
+    <div class="result-card card">
+
+      <div class="result-header">
+        <h2>🔍 Prediction Result</h2>
+        <p>AgroFertilizerLoss · Gradient Boosting Model</p>
+      </div>
+
+      <div class="card-body p-4">
+
+        <!-- BIG NUMBER -->
+        <div class="my-3">
+          <div class="big-number"
+               style="color:{% if level_color == 'success' %}#2c5f2d{% elif level_color == 'warning' %}#856404{% else %}#c0392b{% endif %}">
+            {{ prediction }}
+          </div>
+          <div class="unit-label">kg of fertilizer lost per hectare (kg/ha)</div>
+          <div class="text-center mt-3">
+            <span class="level-badge level-{{ level_color }}">{{ emoji }} {{ level }}</span>
+          </div>
+        </div>
+
+        <!-- ADVICE -->
+        <div class="advice-box">
+          💡 <strong>What this means:</strong> {{ advice }}
+        </div>
+
+        <!-- INPUT SUMMARY -->
+        <div class="summary-box">
+          <h6>📋 Your Input Summary</h6>
+          <div class="s-row"><span>Crop Type</span><span>{{ crop }}</span></div>
+          <div class="s-row"><span>Soil Type</span><span>{{ soil }}</span></div>
+          <div class="s-row"><span>Irrigation Type</span><span>{{ irrigation }}</span></div>
+          <div class="s-row"><span>Fertilizer Type</span><span>{{ fertilizer }}</span></div>
+          <div class="s-row"><span>Rainfall</span><span>{{ rainfall }} mm</span></div>
+          <div class="s-row"><span>Application Rate</span><span>{{ app_rate }} kg/ha</span></div>
+        </div>
+
+        <!-- BACK -->
+        <div class="text-center mt-4">
+          <a href="/" class="btn-back">← Predict Again</a>
+        </div>
+
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<footer>
+  ITEP 303 · AgroFertilizerLoss Prediction System · Flask + Jinja2 · Gradient Boosting Model
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
